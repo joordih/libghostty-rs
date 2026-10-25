@@ -47,7 +47,8 @@
           targets = rustTargets;
         };
         rustTargets =
-          pkgs.lib.optionals pkgs.stdenv.isLinux [
+          ["wasm32-unknown-unknown"]
+          ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
             "x86_64-unknown-linux-gnu"
             "x86_64-unknown-linux-musl"
           ]
@@ -290,6 +291,7 @@
           packages = [
             devToolchain
             zigPkg
+            pkgs.nodejs
             pkgs.clang
             pkgs.libclang
             pkgs.pkg-config
@@ -330,6 +332,12 @@
 
         devShells.miri = pkgs.mkShell {
           packages = [miriToolchain];
+        };
+
+        # Rust ships no wasm64 std; reuse the nightly toolchain with rust-src
+        # to build it with -Zbuild-std, without changing the native MSRV.
+        devShells.wasm64 = pkgs.mkShell {
+          packages = [miriToolchain zigPkg pkgs.nodejs];
         };
       }
     );
